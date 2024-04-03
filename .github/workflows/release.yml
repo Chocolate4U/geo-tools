@@ -29,6 +29,12 @@ jobs:
           repository: Loyalsoldier/geoip
           path: geoip
 
+      - name: Checkout mmdbverify repository
+        uses: actions/checkout@v4
+        with:
+          repository: maxmind/mmdbverify
+          path: mmdbverify
+
       - name: Set ENV variables
         run: |
           echo "RELEASE_NAME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
@@ -52,10 +58,18 @@ jobs:
           go mod tidy
           go build -o geoip
           tar -czvf geoip.tar.gz ./geoip
+
+      - name: Build mmdbverify binary
+        run: |
+          cd mmdbverify
+          go mod edit -go=1.21
+          go mod tidy
+          go build -o mmdbverify
+          tar -czvf mmdbverify.tar.gz ./mmdbverify
     
       - name: Release and upload assets
         run: |
           gh release create ${{ env.TAG_NAME }} -n "${{ env.RELEASE_DATE }}" -t "${{ env.RELEASE_NAME }}" ${{ env.FILES }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FILES: ./geosite/geosite.tar.gz ./geoip/geoip.tar.gz
+          FILES: ./geosite/geosite.tar.gz ./geoip/geoip.tar.gz ./mmdbverify/mmdbverify.tar.gz
