@@ -1,0 +1,61 @@
+name: Build geo-tools binaries
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout geo-tools repository
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+          cache: false
+
+      - name: Checkout domain-list-community repository
+        uses: actions/checkout@v4
+        with:
+          repository: v2fly/domain-list-community
+          path: geosite
+
+      - name: Checkout geoip repository
+        uses: actions/checkout@v4
+        with:
+          repository: Loyalsoldier/geoip
+          path: geoip
+
+      - name: Set ENV variables
+        run: |
+          echo "RELEASE_NAME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
+          echo "TAG_NAME=$(date +%Y%m%d%H%M)" >> $GITHUB_ENV
+          echo "RELEASE_DATE=$(date +'%F %T %Z')" >> $GITHUB_ENV
+
+      - name: Create release directory
+        run: mkdir release
+
+      - name: Build geosite binary
+        run: |
+          cd geosite
+          go mod edit -go=1.21
+          go mod tidy
+          go build -o geosite
+          tar -czvf geosite.tar.gz ./geosite
+
+      - name: Build geoip binary
+        run: |
+          cd geoip
+          go mod tidy
+          go build -o geoip
+          tar -czvf geoip.tar.gz ./geoip
+    
+      - name: Release and upload assets
+        run: |
+          gh release create ${{ env.TAG_NAME }} -n "${{ env.RELEASE_DATE }}" -t "${{ env.RELEASE_NAME }}" ${{ env.FILES }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FILES: ./geosite/geosite.tar.gz ./geoip/geoip.tar.gz
