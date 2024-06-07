@@ -47,7 +47,6 @@ jobs:
       - name: Build geosite binary
         run: |
           cd geosite
-          go mod edit -go=1.21
           go mod tidy
           go build -o geosite
           tar -czvf geosite.tar.gz ./geosite
@@ -62,7 +61,6 @@ jobs:
       - name: Build mmdbverify binary
         run: |
           cd mmdbverify
-          go mod edit -go=1.21
           go mod tidy
           go build -o mmdbverify
           tar -czvf mmdbverify.tar.gz ./mmdbverify
